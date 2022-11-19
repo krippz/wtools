@@ -4,20 +4,19 @@ Copyright © 2022 Kristofer Linnestjerna <krippz@krippz.se>
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	jwtHelper "github.com/krippz/wtools/internal/jwt"
 	"os"
 	"regexp"
 
-	"github.com/TylerBrock/colorjson"
 	"github.com/fatih/color"
-	"github.com/golang-jwt/jwt"
 	"github.com/spf13/cobra"
 )
 
 var (
 	jwtToken string
+	Plain    bool
 )
 
 // jwtCmd represents the jwt command
@@ -49,64 +48,32 @@ var jwtCmd = &cobra.Command{
 			return
 		}
 
-		token, _ := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
-			return []byte("AllYourBase"), nil
-		})
+		token, err := jwtHelper.GetJwtTokenFromString(jwtToken)
+		if err != nil {
+			errPrinter.Println("Could not parse string as JWT Token")
+		}
 
 		dataClaims, err := json.Marshal(token.Claims)
 		if err != nil {
 			errPrinter.Println("Could not convert Claims to bytes")
 			os.Exit(1)
 		}
-		claims, err := convertToJsonMap(&dataClaims)
+		claims, err := jwtHelper.ConvertToJsonMap(&dataClaims)
 		if err != nil {
 
 			errPrinter.Println("Could not convert Claims to map")
 			os.Exit(2)
 		}
-		
-		jsonClaims, _ := mapToColorizedJsonString(claims)
-		pretty, _ := dataToJsonString(dataClaims)
 
-		fmt.Println(pretty)
-		fmt.Println(jsonClaims)
+		prettyColorized, _ := jwtHelper.MapToColorizedJsonString(claims)
+		prettyPlain, _ := jwtHelper.DataToJsonString(dataClaims)
+
+		if Plain {
+			fmt.Println(prettyPlain)
+		} else {
+			fmt.Println(prettyColorized)
+		}
 	},
-}
-
-func dataToJsonString(data []byte) (string, error) {
-	var prettyJSON bytes.Buffer
-	if err := json.Indent(&prettyJSON, data, "", "    "); err != nil {
-		return "", nil
-	}
-	return prettyJSON.String(), nil
-}
-
-func mapToColorizedJsonString(data map[string]interface{}) (string, error) {
-
-	formatter := colorjson.NewFormatter()
-	formatter.Indent = 4
-	colorizedData, err := formatter.Marshal(data)
-	if err != nil {
-		return "", err
-	}
-	return string(colorizedData), nil
-}
-
-func iterMap(claims *map[string]interface{}) {
-	for key, value := range *claims {
-		fmt.Println("key:", key, "=>", "value:", value)
-	}
-}
-
-func convertToJsonMap(data *[]byte) (map[string]interface{}, error) {
-
-	var mappedClaims map[string]interface{}
-	err := json.Unmarshal([]byte(*data), &mappedClaims)
-	if err != nil {
-		return nil, err
-	}
-
-	return mappedClaims, nil
 }
 
 func init() {
@@ -120,5 +87,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// jwtCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	jwtCmd.Flags().BoolVarP(&Plain, "plain", "p", false, "Show output with no colorization")
 }
