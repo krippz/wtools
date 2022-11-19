@@ -4,8 +4,10 @@ Copyright © 2022 Kristofer Linnestjerna <krippz@krippz.se>
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 
 	"github.com/TylerBrock/colorjson"
@@ -30,6 +32,7 @@ var jwtCmd = &cobra.Command{
 	SilenceErrors: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		errPrinter := color.New(color.FgRed).Add(color.Underline)
 		if len(args) == 1 {
 			jwtToken = args[0]
 		}
@@ -40,8 +43,7 @@ var jwtCmd = &cobra.Command{
 		var match, _ = regexp.MatchString("(^[\\w-]*\\.[\\w-]*\\.[\\w-]*$)", jwtToken)
 		if !match {
 			fmt.Println()
-			errColor := color.New(color.FgRed).Add(color.Underline)
-			_, _ = errColor.Println("No a valid jwt token was supplied")
+			_, _ = errPrinter.Println("No a valid jwt token was supplied")
 			fmt.Println()
 			_ = cmd.Help()
 			return
@@ -51,21 +53,43 @@ var jwtCmd = &cobra.Command{
 			return []byte("AllYourBase"), nil
 		})
 
-		dataClaims, _ := json.Marshal(token.Claims)
-		claims := convertToJsonMap(&dataClaims)
-		jsonClaims := mapToColorizedJsonString(claims)
+		dataClaims, err := json.Marshal(token.Claims)
+		if err != nil {
+			errPrinter.Println("Could not convert Claims to bytes")
+			os.Exit(1)
+		}
+		claims, err := convertToJsonMap(&dataClaims)
+		if err != nil {
 
+			errPrinter.Println("Could not convert Claims to map")
+			os.Exit(2)
+		}
+		
+		jsonClaims, _ := mapToColorizedJsonString(claims)
+		pretty, _ := dataToJsonString(dataClaims)
+
+		fmt.Println(pretty)
 		fmt.Println(jsonClaims)
 	},
 }
 
-func mapToColorizedJsonString(data map[string]interface{}) string {
+func dataToJsonString(data []byte) (string, error) {
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, data, "", "    "); err != nil {
+		return "", nil
+	}
+	return prettyJSON.String(), nil
+}
+
+func mapToColorizedJsonString(data map[string]interface{}) (string, error) {
 
 	formatter := colorjson.NewFormatter()
 	formatter.Indent = 4
-	colorizedData, _ := formatter.Marshal(data)
-
-	return string(colorizedData)
+	colorizedData, err := formatter.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+	return string(colorizedData), nil
 }
 
 func iterMap(claims *map[string]interface{}) {
@@ -74,12 +98,15 @@ func iterMap(claims *map[string]interface{}) {
 	}
 }
 
-func convertToJsonMap(data *[]byte) map[string]interface{} {
+func convertToJsonMap(data *[]byte) (map[string]interface{}, error) {
 
 	var mappedClaims map[string]interface{}
-	json.Unmarshal([]byte(*data), &mappedClaims)
+	err := json.Unmarshal([]byte(*data), &mappedClaims)
+	if err != nil {
+		return nil, err
+	}
 
-	return mappedClaims
+	return mappedClaims, nil
 }
 
 func init() {
