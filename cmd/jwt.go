@@ -1,91 +1,86 @@
-/*
-Copyright © 2022 Kristofer Linnestjerna <krippz@krippz.se>
-*/
+// Package cmd /*
 package cmd
+
+//goland:noinspection SpellCheckingInspection
 
 import (
 	"encoding/json"
 	"fmt"
-	jwtHelper "github.com/krippz/wtools/internal/jwt"
-	"os"
+	"log"
 	"regexp"
 
 	"github.com/fatih/color"
+	jwthelper "github.com/krippz/wtools/internal/jwt"
 	"github.com/spf13/cobra"
 )
 
 var (
-	jwtToken string
-	Plain    bool
+	Plain bool //nolint:gochecknoglobals
 )
 
-// jwtCmd represents the jwt command
-// jsonClaims
-var jwtCmd = &cobra.Command{
+const one, two = 1, 2
+
+// jwtCmd represents the jwt command.
+//
+//goland:noinspection ALL
+var jwtCmd = &cobra.Command{ //nolint:exhaustruct,exhaustivestruct
 	Use:   "jwt [JWT-TOKEN]",
 	Short: "Decode a jwt token to plain json",
 	Long: `Decode a jwt token and display the claims it contains in the terminal. For example:
 	
-	wtools jwt eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`,
-	Args:          cobra.MaximumNArgs(2),
+	wtools jwt eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`, //nolint:lll
+	Args:          cobra.MaximumNArgs(two),
 	SilenceErrors: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		errPrinter := color.New(color.FgRed).Add(color.Underline)
-		if len(args) == 1 {
+
+		var jwtToken string
+		if len(args) == one {
 			jwtToken = args[0]
 		}
-		if len(args) == 2 {
+		if len(args) == two {
 			jwtToken = args[1]
 		}
 
 		var match, _ = regexp.MatchString("(^[\\w-]*\\.[\\w-]*\\.[\\w-]*$)", jwtToken)
 		if !match {
-			fmt.Println()
 			_, _ = errPrinter.Println("No a valid jwt token was supplied")
-			fmt.Println()
 			_ = cmd.Help()
+
 			return
 		}
 
-		token, err := jwtHelper.GetJwtTokenFromString(jwtToken)
+		token, err := jwthelper.GetJwtTokenFromString(jwtToken)
 		if err != nil {
-			errPrinter.Println("Could not parse string as JWT Token")
+			_, _ = errPrinter.Println("Could not parse string as JWT Token")
+			log.Fatal(err)
 		}
 
 		dataClaims, err := json.Marshal(token.Claims)
 		if err != nil {
-			errPrinter.Println("Could not convert Claims to bytes")
-			os.Exit(1)
+			_, _ = errPrinter.Println("Could not convert Claims to bytes")
+			log.Fatal(err)
 		}
-		claims, err := jwtHelper.ConvertToJsonMap(&dataClaims)
+
+		claims, err := jwthelper.ConvertToJSONMap(&dataClaims)
 		if err != nil {
-
-			errPrinter.Println("Could not convert Claims to map")
-			os.Exit(2)
+			_, _ = errPrinter.Println("Could not convert Claims to map")
+			log.Fatal(err)
 		}
 
-		prettyColorized, _ := jwtHelper.MapToColorizedJsonString(claims)
-		prettyPlain, _ := jwtHelper.DataToJsonString(dataClaims)
+		prettyColorized, _ := jwthelper.MapToColorizedJSONString(claims)
+		prettyPlain, _ := jwthelper.DataToJSONString(dataClaims)
 
 		if Plain {
-			fmt.Println(prettyPlain)
+			fmt.Println(prettyPlain) //nolint:forbidigo
 		} else {
-			fmt.Println(prettyColorized)
+			fmt.Println(prettyColorized) //nolint:forbidigo
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(jwtCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// jwtCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
 	jwtCmd.Flags().BoolVarP(&Plain, "plain", "p", false, "Show output with no colorization")
 }

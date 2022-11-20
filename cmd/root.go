@@ -1,7 +1,4 @@
-/*
-Copyright © 2022 Kristofer Linnestjerna <krippz@krippz.se>
-
-*/
+// Package cmd /*
 package cmd
 
 import (
@@ -10,10 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
-
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+// rootCmd represents the base command when called without any subcommands.
+//
+//goland:noinspection GoLinter
+var rootCmd = &cobra.Command{ //nolint:gochecknoglobals,exhaustruct,exhaustivestruct
 	Use:   "wtools",
 	Short: "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
@@ -30,13 +27,12 @@ to quickly create a Cobra application.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
 
-func init() {
+func init() { //nolint:wsl
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -47,5 +43,3 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
-
-

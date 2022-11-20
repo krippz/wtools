@@ -1,45 +1,52 @@
-package jwtHelper
+package jwthelper
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/TylerBrock/colorjson"
 	"github.com/golang-jwt/jwt"
 )
 
+var ErrUnableToParse = errors.New("could not parse jwt token string")
+
 func GetJwtTokenFromString(token string) (*jwt.Token, error) {
 	jwtToken, _ := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		return nil, errors.New("Could not parse jwt token string")
+		return nil, ErrUnableToParse
 	})
 
 	return jwtToken, nil
 }
 
-func DataToJsonString(data []byte) (string, error) {
+func DataToJSONString(data []byte) (string, error) {
 	var prettyJSON bytes.Buffer
-	if err := json.Indent(&prettyJSON, data, "", "    "); err != nil {
-		return "", nil
+
+	err := json.Indent(&prettyJSON, data, "", "    ")
+	if err != nil {
+		return "", err
 	}
+
 	return prettyJSON.String(), nil
 }
 
-func MapToColorizedJsonString(data map[string]interface{}) (string, error) {
-
+func MapToColorizedJSONString(data map[string]interface{}) (string, error) {
 	formatter := colorjson.NewFormatter()
 	formatter.Indent = 4
+
 	colorizedData, err := formatter.Marshal(data)
 	if err != nil {
 		return "", err
 	}
+
 	return string(colorizedData), nil
 }
 
-func ConvertToJsonMap(data *[]byte) (map[string]interface{}, error) {
-
+func ConvertToJSONMap(data *[]byte) (map[string]interface{}, error) {
 	var mappedClaims map[string]interface{}
-	err := json.Unmarshal([]byte(*data), &mappedClaims)
+
+	err := json.Unmarshal(*data, &mappedClaims)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +54,9 @@ func ConvertToJsonMap(data *[]byte) (map[string]interface{}, error) {
 	return mappedClaims, nil
 }
 
+//goland:noinspection GoUnusedExportedFunction
 func IterMap(claims *map[string]interface{}) {
 	for key, value := range *claims {
-		fmt.Println("key:", key, "=>", "value:", value)
+		fmt.Println("key:", key, "=>", "value:", value) //nolint:forbidigo
 	}
 }
