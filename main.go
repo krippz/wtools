@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 Kristofer Linnestjerna <krippz@krippz.se>
-
 */
 package main
 

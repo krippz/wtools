@@ -2,17 +2,25 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	version   string
+	gitCommit string //nolint:gochecknoglobals
+	buildDate string
 )
 
 // rootCmd represents the base command when called without any subcommands.
 //
 //goland:noinspection GoLinter
 var rootCmd = &cobra.Command{ //nolint:gochecknoglobals,exhaustruct,exhaustivestruct
-	Use:   "wtools",
-	Short: "A brief description of your application",
+	Use:     "wtools",
+	Version: version,
+	Short:   "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
 
@@ -42,4 +50,5 @@ func init() { //nolint:wsl
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.SetVersionTemplate(fmt.Sprintf("version: %v \r\ngit commit: %v\r\nbuild-date: %v", version, gitCommit, buildDate)) //nolint:lll
 }

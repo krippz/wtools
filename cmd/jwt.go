@@ -23,9 +23,10 @@ const one, two = 1, 2
 // jwtCmd represents the jwt command.
 //
 //goland:noinspection ALL
-var jwtCmd = &cobra.Command{ //nolint:exhaustruct,exhaustivestruct
-	Use:   "jwt [JWT-TOKEN]",
-	Short: "Decode a jwt token to plain json",
+var jwtCmd = &cobra.Command{ //nolint:gochecknoglobals,exhaustruct,exhaustivestruct
+	Use:     "jwt [JWT-TOKEN]",
+	Short:   "Decode a jwt token to plain json",
+	Version: rootCmd.Version,
 	Long: `Decode a jwt token and display the claims it contains in the terminal. For example:
 	
 	wtools jwt eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`, //nolint:lll
