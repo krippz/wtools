@@ -11,7 +11,8 @@ import (
 var (
 	version   string
 	gitCommit string //nolint:gochecknoglobals
-	buildDate string
+	buildDate string //nolint:gochecknoglobals
+	appName   string //nolint:gochecknoglobals
 )
 
 // rootCmd represents the base command when called without any subcommands.
@@ -50,5 +51,5 @@ func init() { //nolint:wsl
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	rootCmd.SetVersionTemplate(fmt.Sprintf("version: %v \r\ngit commit: %v\r\nbuild-date: %v", version, gitCommit, buildDate)) //nolint:lll
+	rootCmd.SetVersionTemplate(fmt.Sprintf("%v version: %v \r\ngit commit: %v\r\nbuild-date: %v", appName, version, gitCommit, buildDate)) //nolint:lll
 }
